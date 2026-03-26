@@ -285,6 +285,44 @@ if(e.isIntersecting){e.target.classList.add('show')}
 });
 document.querySelectorAll('.fragment').forEach(el=>obs.observe(el));
 
+/* MOBILE TOUCH SUPPORT */
+
+let startY = 0;
+let endY = 0;
+
+window.addEventListener("touchstart", e => {
+  startY = e.touches[0].clientY;
+});
+
+window.addEventListener("touchend", e => {
+  endY = e.changedTouches[0].clientY;
+  handleSwipe();
+});
+
+function handleSwipe(){
+  let diff = startY - endY;
+
+  if (Math.abs(diff) < 50) return; // ignore small swipes
+
+  if (isScrolling) return;
+  isScrolling = true;
+
+  if (diff > 0 && current < pages.length - 1){
+    // swipe up → next page
+    pages[current].classList.add('flipped');
+    current++;
+  } 
+  else if (diff < 0 && current > 0){
+    // swipe down → previous page
+    current--;
+    pages[current].classList.remove('flipped');
+  }
+
+  setTimeout(() => {
+    isScrolling = false;
+  }, 1800);
+}
+
 /* CURSOR GLOW */
 const glow=document.querySelector(".cursor-glow");
 let mouse={x:0,y:0};
