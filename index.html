@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KriSh — Space</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond&family=Playfair+Display&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cormorant Garamond',serif;background:#050814;color:#e6dccf;overflow:hidden}
+canvas{position:fixed;inset:0;z-index:0}
+
+/* LOADER */
+.loader{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:100;animation:fadeOut 2s forwards 3s}
+.loader .star{width:4px;height:4px;background:#fff;border-radius:50%;animation:expand 2s ease-out forwards}
+.loader h1{margin-top:2rem;font-size:2rem;opacity:0;animation:fadeIn 2s forwards 1.5s}
+@keyframes expand{to{transform:scale(200);opacity:0}}
+@keyframes fadeIn{to{opacity:1}}
+@keyframes fadeOut{to{opacity:0;pointer-events:none}}
+
+/* SCENES */
+.scene{position:absolute;width:100%;height:100%;padding:3rem;opacity:0;transform:scale(1.2);transition:1.2s}
+.scene.active{opacity:1;transform:scale(1)}
+.scene.exit{opacity:0;transform:scale(0.7);filter:blur(15px)}
+
+h1{font-size:clamp(4rem,10vw,8rem);background:linear-gradient(90deg,#fff,#ffd76a,#7aa2ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{margin-top:1rem;font-style:italic}
+
+.grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.card{padding:1rem;border:1px solid rgba(255,215,100,.3);transition:.4s}
+
+.contact a{display:block;margin:1rem 0;color:#ffd76a;text-decoration:none}
+
+.end{display:flex;align-items:center;justify-content:center;height:100%;text-align:center;font-size:1.5rem}
+
+/* ANIME CHARACTER */
+.character{
+ position:absolute;
+ bottom:0;
+ right:5%;
+ width:200px;
+ height:300px;
+ background:url('https://raw.githubusercontent.com/krishnamdev127/krish-space/refs/heads/main/anime.png') center/cover no-repeat;
+ filter:drop-shadow(0 0 20px rgba(120,180,255,.5));
+ animation:floatChar 4s ease-in-out infinite;
+}
+
+@keyframes floatChar{
+ 0%,100%{transform:translateY(0)}
+ 50%{transform:translateY(-10px)}
+}
+
+/* CURSOR */
+.cursor{position:fixed;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(120,180,255,.25),transparent 70%);pointer-events:none;transform:translate(-50%,-50%);z-index:10;filter:blur(20px)}
+
+</style>
+</head>
+
+<body>
+
+<div class="loader">
+  <div class="star"></div>
+  <h1>KriSh</h1>
+</div>
+
+<div class="cursor"></div>
+<canvas id="bg"></canvas>
+
+<!-- AUDIO (AUTO + LOW VOLUME) -->
+<audio id="ambient" loop preload="auto" muted>
+  <source src="https://github.com/krishnamdev127/krish-space/raw/refs/heads/main/webpage_bg.mp3">
+</audio>
+
+<div class="scene active">
+  <h1>KriSh.</h1>
+  <p class="subtitle" id="type"></p>
+  <div class="character"></div>
+</div>
+
+<div class="scene">
+  <h2>Fields of Study</h2>
+  <div class="grid">
+    <div class="card">History</div>
+    <div class="card">Geography</div>
+    <div class="card">Political Science</div>
+    <div class="card">Literature</div>
+    <div class="card">Psychology</div>
+    <div class="card">Philosophy</div>
+  </div>
+</div>
+
+<div class="scene">
+  <h2>Fragments</h2>
+  <div>“We are such stuff as dreams are made on.”</div>
+  <div>“What you seek is seeking you.”</div>
+  <div>“Indeed, with hardship comes ease.”</div>
+</div>
+
+<div class="scene">
+  <h2>Connect</h2>
+  <div class="contact">
+    <a href="mailto:krishnamdev127@gmail.com">Email</a>
+    <a href="https://instagram.com/kr_ndv" target="_blank">Instagram</a>
+  </div>
+</div>
+
+<div class="scene">
+  <div class="end">Made with love, curiosity, and a bit of chaos ✨</div>
+</div>
+
+<script>
+
+/* AUDIO FIX (FULLY WORKING) */
+const audio = document.getElementById("ambient");
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const analyser = audioCtx.createAnalyser();
+
+let source;
+let audioStarted = false;
+
+function setupAudio(){
+  if(!source){
+    source = audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    analyser.fftSize = 64;
+  }
+}
+
+function startAudio(){
+  if(audioStarted) return;
+  audioStarted = true;
+
+  setupAudio();
+
+  audioCtx.resume(); // 🔥 MOST IMPORTANT FIX
+
+  audio.muted = false;
+  audio.volume = 0.2;
+
+  audio.play().catch(()=>{});
+
+  document.removeEventListener("click", startAudio);
+  document.removeEventListener("keydown", startAudio);
+  document.removeEventListener("touchstart", startAudio);
+}
+
+/* TRY AUTOPLAY (WILL FAIL SILENTLY SOMETIMES) */
+audio.muted = true;
+audio.play().then(()=>{
+  setTimeout(()=>{
+    startAudio();
+  },500);
+}).catch(()=>{
+  // fallback
+  document.addEventListener("click", startAudio);
+  document.addEventListener("keydown", startAudio);
+  document.addEventListener("touchstart", startAudio);
+});
+
+/* SMOOTH LOOP */
+audio.addEventListener("ended", () => {
+  audio.currentTime = 0;
+  audio.play();
+});
+
+/* TYPE */
+const t="A record of thoughts, curiosities, and quiet observations.";
+let i=0;
+(function type(){if(i<t.length){document.getElementById("type").innerHTML+=t[i++];setTimeout(type,35)}})();
+
+/* NAV */
+let current=0;
+const scenes=document.querySelectorAll('.scene');
+let busy=false;
+
+function go(next){
+ if(busy||next===current) return;
+ busy=true;
+ scenes[current].classList.add('exit');
+ setTimeout(()=>{
+   scenes[current].classList.remove('active','exit');
+   scenes[next].classList.add('active');
+   current=next;
+   busy=false;
+ },700);
+}
+
+let last=0;
+window.addEventListener('wheel',e=>{
+ let now=Date.now();
+ if(now-last<700) return;
+ if(e.deltaY>0 && current<scenes.length-1) go(current+1);
+ if(e.deltaY<0 && current>0) go(current-1);
+ last=now;
+});
+
+document.addEventListener('keydown',e=>{
+ if(e.key==='ArrowDown'||e.key==='ArrowRight') go(Math.min(current+1,scenes.length-1));
+ if(e.key==='ArrowUp'||e.key==='ArrowLeft') go(Math.max(current-1,0));
+});
+
+let startY=0;
+document.addEventListener('touchstart',e=>startY=e.touches[0].clientY);
+document.addEventListener('touchend',e=>{
+ let endY=e.changedTouches[0].clientY;
+ if(startY-endY>50) go(Math.min(current+1,scenes.length-1));
+ if(endY-startY>50) go(Math.max(current-1,0));
+});
+
+/* CURSOR */
+let mouse={x:0,y:0};
+document.addEventListener('mousemove',e=>{
+ mouse.x=e.clientX; mouse.y=e.clientY;
+ document.querySelector('.cursor').style.left=mouse.x+'px';
+ document.querySelector('.cursor').style.top=mouse.y+'px';
+});
+
+/* CANVAS */
+const canvas=document.getElementById('bg');
+const ctx=canvas.getContext('2d');
+
+function resize(){
+  canvas.width=innerWidth;
+  canvas.height=innerHeight;
+}
+resize();
+window.onresize=resize;
+
+/* STARS */
+let stars=[...Array(80)].map(()=>({
+  x:Math.random()*canvas.width,
+  y:Math.random()*canvas.height,
+  a:Math.random()*6
+}));
+
+const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+/* DRAW LOOP */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  let avg = 0;
+
+  if(audioCtx.state === "running"){
+    analyser.getByteFrequencyData(dataArray);
+
+    let sum = 0;
+    for(let i=0;i<dataArray.length;i++) sum += dataArray[i];
+    avg = sum / dataArray.length;
+  }
+
+  stars.forEach(s=>{
+    s.a += 0.01;
+
+    let dx = mouse.x - s.x;
+    let dy = mouse.y - s.y;
+    let d = Math.sqrt(dx*dx + dy*dy);
+
+    if(d < 120){
+      s.x -= dx * 0.02;
+      s.y -= dy * 0.02;
+    }
+
+    s.x += Math.cos(s.a)*0.3;
+    s.y += Math.sin(s.a)*0.3;
+
+    let glow = avg / 255;
+
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(255,215,100,${0.5 + glow})`;
+    ctx.shadowColor = `rgba(255,215,100,${glow})`;
+    ctx.shadowBlur = 20 * glow;
+
+    ctx.arc(s.x, s.y, 2 + glow*2, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+</script>
+
+</body>
+</html>
